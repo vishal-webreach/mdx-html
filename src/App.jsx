@@ -318,8 +318,30 @@ const App = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Styles generator function to handle theme changes in the preview content
-  const getPreviewStyles = (dark) => `
+  // Styles generator function to handle theme changes in the preview content AND scrollbars
+  const getGlobalStyles = (dark) => `
+    /* Scrollbar Styling */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: ${dark ? '#334155 #0f172a' : '#cbd5e1 #f1f5f9'};
+    }
+    *::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    *::-webkit-scrollbar-track {
+      background: ${dark ? '#0f172a' : '#f1f5f9'};
+    }
+    *::-webkit-scrollbar-thumb {
+      background-color: ${dark ? '#334155' : '#cbd5e1'};
+      border-radius: 4px;
+      border: 2px solid ${dark ? '#0f172a' : '#f1f5f9'};
+    }
+    *::-webkit-scrollbar-thumb:hover {
+      background-color: ${dark ? '#475569' : '#94a3b8'};
+    }
+
+    /* Preview Content Styling */
     .preview-content {
       color: ${dark ? '#e2e8f0' : '#334155'};
     }
@@ -457,7 +479,7 @@ const App = () => {
 
   return (
     <div className={`h-[100dvh] flex flex-col font-sans transition-colors duration-200 ${isDarkMode ? 'bg-slate-950 text-slate-200' : 'bg-slate-50 text-slate-800'}`}>
-      <style>{getPreviewStyles(isDarkMode)}</style>
+      <style>{getGlobalStyles(isDarkMode)}</style>
 
       {/* Header */}
       <header className={`flex-none flex flex-col sm:flex-row items-center justify-between shadow-sm z-20 border-b transition-colors duration-200 gap-3 sm:gap-0 px-4 sm:px-6 py-3 sm:py-4 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
