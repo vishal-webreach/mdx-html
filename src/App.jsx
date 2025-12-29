@@ -12,10 +12,16 @@ import {
   Download,
   Save,
   Cloud,
-  Loader2
+  Loader2,
+  Moon,
+  Sun,
+  Type,
+  Layout,
+  FileText
 } from 'lucide-react';
 
 const STORAGE_KEY = 'mdx_converter_content';
+const THEME_KEY = 'mdx_converter_theme';
 
 const DEFAULT_MDX = `# Heading Level 1
 ## Heading Level 2
@@ -54,17 +60,37 @@ const greet = () => {
 </button>
 `;
 
-const CheatSheet = ({ onClose }) => (
+// --- Components ---
+
+const Preloader = ({ isDarkMode }) => (
+  <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center transition-colors duration-300 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
+    <div className="relative flex items-center justify-center mb-6">
+      <div className={`absolute inset-0 rounded-full animate-ping opacity-20 ${isDarkMode ? 'bg-indigo-500' : 'bg-indigo-600'}`}></div>
+      <div className={`relative p-4 rounded-2xl shadow-xl ${isDarkMode ? 'bg-slate-900 shadow-indigo-900/20' : 'bg-white shadow-indigo-100'}`}>
+        <ArrowRightLeft className={`w-10 h-10 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'} animate-pulse`} />
+      </div>
+    </div>
+    <h2 className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+      MDX Converter
+    </h2>
+    <div className={`flex items-center gap-2 text-sm ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+      <Loader2 className="w-4 h-4 animate-spin" />
+      <span>Loading compiler core...</span>
+    </div>
+  </div>
+);
+
+const CheatSheet = ({ onClose, isDarkMode }) => (
   <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
-      <div className="flex items-center justify-between p-4 border-b border-slate-100">
-        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-          <Terminal className="w-5 h-5 text-indigo-600" />
+    <div className={`rounded-xl shadow-2xl w-full max-w-3xl max-h-[85dvh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200 ${isDarkMode ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}`}>
+      <div className={`flex items-center justify-between p-4 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+        <h2 className={`text-lg font-bold flex items-center gap-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
+          <Terminal className="w-5 h-5 text-indigo-500" />
           Markdown & JSX Cheat Sheet
         </h2>
         <button 
           onClick={onClose}
-          className="p-1 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
+          className={`p-1 rounded-full transition-colors ${isDarkMode ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
         >
           <X className="w-5 h-5" />
         </button>
@@ -72,97 +98,72 @@ const CheatSheet = ({ onClose }) => (
       
       <div className="p-0 overflow-y-auto">
         <table className="w-full text-left text-sm border-collapse">
-          <thead className="bg-slate-50 text-slate-600 font-semibold sticky top-0 bg-white shadow-sm z-10">
+          <thead className={`font-semibold sticky top-0 z-10 ${isDarkMode ? 'bg-slate-900 text-slate-300' : 'bg-slate-50 text-slate-600'}`}>
             <tr>
-              <th className="p-3 border-b border-slate-200 w-1/4">Element</th>
-              <th className="p-3 border-b border-slate-200 w-1/2">Markdown Syntax</th>
-              <th className="p-3 border-b border-slate-200 w-1/4">Result / HTML</th>
+              <th className={`p-3 border-b w-1/4 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>Element</th>
+              <th className={`p-3 border-b w-1/3 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>Markdown Syntax</th>
+              <th className={`p-3 border-b w-1/3 ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>Result / HTML</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-slate-700">
+          <tbody className={`divide-y ${isDarkMode ? 'divide-slate-800 text-slate-400' : 'divide-slate-100 text-slate-700'}`}>
             <tr>
-              <td className="p-3 font-medium">Heading 1</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50"># Title</td>
-              <td className="p-3 font-mono text-slate-500">&lt;h1&gt;Title&lt;/h1&gt;</td>
+              <td className="p-3 font-medium">Headings</td>
+              <td className={`p-3 font-mono text-indigo-500 ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}># H1<br/>## H2<br/>### H3</td>
+              <td className="p-3 font-mono opacity-70">&lt;h1&gt;...&lt;/h1&gt;</td>
             </tr>
             <tr>
-              <td className="p-3 font-medium">Heading 2</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50">## Subtitle</td>
-              <td className="p-3 font-mono text-slate-500">&lt;h2&gt;Subtitle&lt;/h2&gt;</td>
-            </tr>
-            <tr>
-              <td className="p-3 font-medium">Line Break</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50">&lt;br /&gt; <span className="text-slate-400">or</span> (2 spaces)</td>
-              <td className="p-3 font-mono text-slate-500">&lt;br /&gt;</td>
-            </tr>
-            <tr>
-              <td className="p-3 font-medium">Bold</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50">**Bold**</td>
-              <td className="p-3 font-mono text-slate-500">&lt;strong&gt;Bold&lt;/strong&gt;</td>
-            </tr>
-            <tr>
-              <td className="p-3 font-medium">Italic</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50">*Italic*</td>
-              <td className="p-3 font-mono text-slate-500">&lt;em&gt;Italic&lt;/em&gt;</td>
-            </tr>
-            <tr>
-              <td className="p-3 font-medium">Link</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50">[Text](url)</td>
-              <td className="p-3 font-mono text-slate-500">&lt;a href="url"&gt;Text&lt;/a&gt;</td>
-            </tr>
-            <tr>
-              <td className="p-3 font-medium">Unordered List</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50">- Item</td>
-              <td className="p-3 font-mono text-slate-500">&lt;ul&gt;&lt;li&gt;Item...</td>
-            </tr>
-            <tr>
-              <td className="p-3 font-medium">Ordered List</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50">1. Item</td>
-              <td className="p-3 font-mono text-slate-500">&lt;ol&gt;&lt;li&gt;Item...</td>
+              <td className="p-3 font-medium">Emphasis</td>
+              <td className={`p-3 font-mono text-indigo-500 ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>**Bold**<br/>*Italic*<br/>~~Strike~~</td>
+              <td className="p-3 font-mono opacity-70">&lt;strong&gt;, &lt;em&gt;, &lt;del&gt;</td>
             </tr>
              <tr>
-              <td className="p-3 font-medium">Table</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50">
-                | Header | Header |<br/>
-                | --- | --- |<br/>
-                | Cell | Cell |
-              </td>
-              <td className="p-3 font-mono text-slate-500">&lt;table&gt;...</td>
+              <td className="p-3 font-medium">Lists</td>
+              <td className={`p-3 font-mono text-indigo-500 ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>- Item 1<br/>1. Numbered 1<br/>- [x] Task</td>
+              <td className="p-3 font-mono opacity-70">&lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;</td>
+            </tr>
+            <tr>
+              <td className="p-3 font-medium">Links & Images</td>
+              <td className={`p-3 font-mono text-indigo-500 ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>[Link](url)<br/>![Alt](img.jpg)</td>
+              <td className="p-3 font-mono opacity-70">&lt;a&gt;, &lt;img /&gt;</td>
             </tr>
             <tr>
               <td className="p-3 font-medium">Blockquote</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50">&gt; Quote</td>
-              <td className="p-3 font-mono text-slate-500">&lt;blockquote&gt;...</td>
+              <td className={`p-3 font-mono text-indigo-500 ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>&gt; Text</td>
+              <td className="p-3 font-mono opacity-70">&lt;blockquote&gt;</td>
             </tr>
             <tr>
-              <td className="p-3 font-medium">Code Block</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50">```js code ```</td>
-              <td className="p-3 font-mono text-slate-500">&lt;pre&gt;&lt;code&gt;...</td>
+              <td className="p-3 font-medium">Code</td>
+              <td className={`p-3 font-mono text-indigo-500 ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>`inline`<br/>```block```</td>
+              <td className="p-3 font-mono opacity-70">&lt;code&gt;, &lt;pre&gt;</td>
+            </tr>
+             <tr>
+              <td className="p-3 font-medium">Table</td>
+              <td className={`p-3 font-mono text-indigo-500 ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+                | H | H |<br/>
+                | - | - |<br/>
+                | C | C |
+              </td>
+              <td className="p-3 font-mono opacity-70">&lt;table&gt;...</td>
             </tr>
             <tr>
-              <td className="p-3 font-medium">Inline Code</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50">`code`</td>
-              <td className="p-3 font-mono text-slate-500">&lt;code&gt;code&lt;/code&gt;</td>
-            </tr>
-            <tr>
-              <td className="p-3 font-medium">Image</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50">![Alt](img.jpg)</td>
-              <td className="p-3 font-mono text-slate-500">&lt;img src="..." /&gt;</td>
+              <td className="p-3 font-medium">Line Break</td>
+              <td className={`p-3 font-mono text-indigo-500 ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>&lt;br /&gt; <span className="opacity-50">or</span> (2 spaces)</td>
+              <td className="p-3 font-mono opacity-70">&lt;br /&gt;</td>
             </tr>
             <tr>
               <td className="p-3 font-medium">Horizontal Rule</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50">---</td>
-              <td className="p-3 font-mono text-slate-500">&lt;hr /&gt;</td>
+              <td className={`p-3 font-mono text-indigo-500 ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>--- <span className="opacity-50">or</span> ***</td>
+              <td className="p-3 font-mono opacity-70">&lt;hr /&gt;</td>
             </tr>
             <tr>
               <td className="p-3 font-medium">JSX / HTML</td>
-              <td className="p-3 font-mono text-indigo-600 bg-slate-50">&lt;div class="..."&gt;</td>
-              <td className="p-3 font-mono text-slate-500">Preserved as is</td>
+              <td className={`p-3 font-mono text-indigo-500 ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>&lt;div class="..."&gt;</td>
+              <td className="p-3 font-mono opacity-70">Preserved as is</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div className="p-4 bg-slate-50 border-t border-slate-200 text-center">
+      <div className={`p-4 border-t text-center ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
         <button 
           onClick={onClose}
           className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-sm"
@@ -174,8 +175,10 @@ const CheatSheet = ({ onClose }) => (
   </div>
 );
 
+// --- Main App ---
+
 const App = () => {
-  // Initialize state from localStorage if available
+  // Initialize content state
   const [input, setInput] = useState(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -184,7 +187,17 @@ const App = () => {
     return DEFAULT_MDX;
   });
 
+  // Initialize Theme State
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const savedTheme = localStorage.getItem(THEME_KEY);
+      return savedTheme === 'dark';
+    }
+    return false;
+  });
+
   const [activeTab, setActiveTab] = useState('preview'); // 'preview' | 'html'
+  const [mobileView, setMobileView] = useState('editor'); // 'editor' | 'output'
   const [htmlOutput, setHtmlOutput] = useState('');
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(null);
@@ -192,45 +205,60 @@ const App = () => {
   const [showCheatSheet, setShowCheatSheet] = useState(false);
   const [isSaved, setIsSaved] = useState(true);
 
+  // Stats calculation
+  const stats = {
+    chars: input.length,
+    words: input.trim() ? input.trim().split(/\s+/).length : 0
+  };
+
   // Load 'marked' library dynamically
   useEffect(() => {
     if (window.marked) {
-      setLibLoaded(true);
+      setTimeout(() => setLibLoaded(true), 800);
       return;
     }
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
     script.onload = () => {
-      setLibLoaded(true);
+      setTimeout(() => setLibLoaded(true), 800);
     };
     document.head.appendChild(script);
   }, []);
 
-  // Auto-save logic with debounce
+  // Auto-save logic
   useEffect(() => {
     const saveToStorage = setTimeout(() => {
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.setItem(STORAGE_KEY, input);
         setIsSaved(true);
       }
-    }, 800); // 800ms delay after typing stops
-
+    }, 800);
     return () => clearTimeout(saveToStorage);
   }, [input]);
+
+  // Theme Persistence logic
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(THEME_KEY, isDarkMode ? 'dark' : 'light');
+    }
+  }, [isDarkMode]);
 
   const handleInputChange = (e) => {
     setIsSaved(false);
     setInput(e.target.value);
   };
 
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
   const handleClear = () => {
     if (confirm('Are you sure you want to clear the editor? This will also clear your auto-saved data.')) {
       setInput('');
-      setIsSaved(false); // Effect will eventually set it to true after saving empty string
+      setIsSaved(false);
     }
   };
 
-  // Simple HTML formatter (indentation)
   const formatHTML = (html) => {
     let formatted = '';
     let indent = '';
@@ -242,27 +270,18 @@ const App = () => {
     return formatted.substring(1, formatted.length - 3);
   };
 
-  // Process the MDX to HTML string
   useEffect(() => {
     if (!libLoaded || !window.marked) return;
-
     try {
-      // Pre-process: Convert JSX className to class for the HTML output/preview
-      // This is a lightweight approximation of MDX compilation
       const preProcessed = input
         .replace(/className="/g, 'class="')
         .replace(/className='/g, "class='");
 
-      // Configure marked to allow HTML
-      // Note: marked normally preserves HTML by default
       const rawHtml = window.marked.parse(preProcessed, {
         breaks: true,
         gfm: true
       });
-
-      // Format/Beautify the HTML
       const formattedHtml = formatHTML(rawHtml);
-      
       setHtmlOutput(formattedHtml);
       setError(null);
     } catch (err) {
@@ -299,189 +318,251 @@ const App = () => {
     URL.revokeObjectURL(url);
   };
 
+  // Styles generator function to handle theme changes in the preview content
+  const getPreviewStyles = (dark) => `
+    .preview-content {
+      color: ${dark ? '#e2e8f0' : '#334155'};
+    }
+    .preview-content h1 {
+      font-size: 2em !important;
+      font-weight: 800 !important;
+      color: ${dark ? '#f8fafc' : '#1e293b'} !important;
+      border-bottom: 2px solid ${dark ? '#334155' : '#e2e8f0'};
+      margin-top: 1.5em;
+      margin-bottom: 0.8em;
+      padding-bottom: 0.3em;
+      line-height: 1.2;
+    }
+    @media (min-width: 640px) {
+      .preview-content h1 { font-size: 2.25em !important; }
+    }
+    .preview-content h2 {
+      font-size: 1.5em !important;
+      font-weight: 700 !important;
+      color: ${dark ? '#f1f5f9' : '#334155'} !important;
+      border-bottom: 1px solid ${dark ? '#334155' : '#e2e8f0'};
+      margin-top: 1.5em;
+      margin-bottom: 0.8em;
+      padding-bottom: 0.3em;
+      line-height: 1.3;
+    }
+    @media (min-width: 640px) {
+      .preview-content h2 { font-size: 1.75em !important; }
+    }
+    .preview-content h3 {
+      font-size: 1.25em !important;
+      font-weight: 600 !important;
+      color: ${dark ? '#cbd5e1' : '#475569'} !important;
+      margin-top: 1.4em;
+      margin-bottom: 0.6em;
+      line-height: 1.4;
+    }
+    @media (min-width: 640px) {
+      .preview-content h3 { font-size: 1.5em !important; }
+    }
+    .preview-content p {
+      margin-bottom: 1.25em;
+      line-height: 1.7;
+    }
+    .preview-content ul {
+      list-style-type: disc;
+      padding-left: 1.6em;
+      margin-bottom: 1.25em;
+    }
+    .preview-content ol {
+      list-style-type: decimal;
+      padding-left: 1.6em;
+      margin-bottom: 1.25em;
+    }
+    .preview-content li {
+      margin-bottom: 0.5em;
+    }
+    .preview-content blockquote {
+      border-left: 4px solid #6366f1;
+      padding: 1em;
+      margin: 1.5em 0;
+      background-color: ${dark ? '#1e293b' : '#f8fafc'};
+      border-radius: 0 0.5rem 0.5rem 0;
+      color: ${dark ? '#94a3b8' : '#475569'};
+      font-style: italic;
+    }
+    .preview-content pre {
+      background-color: ${dark ? '#0f172a' : '#1e293b'};
+      color: #e2e8f0;
+      padding: 1.25em;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      margin: 1.5em 0;
+      border: 1px solid ${dark ? '#334155' : 'transparent'};
+    }
+    .preview-content code {
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+    .preview-content :not(pre) > code {
+      background-color: ${dark ? '#334155' : '#f1f5f9'};
+      color: ${dark ? '#f472b6' : '#db2777'};
+      padding: 0.2em 0.4em;
+      border-radius: 0.25em;
+      font-weight: 500;
+    }
+    .preview-content img {
+      border-radius: 0.5rem;
+      max-width: 100%;
+      height: auto;
+    }
+    .preview-content a {
+      color: ${dark ? '#818cf8' : '#4f46e5'};
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .preview-content a:hover {
+      color: ${dark ? '#a5b4fc' : '#4338ca'};
+    }
+    .preview-content hr {
+      border: 0;
+      border-top: 2px solid ${dark ? '#334155' : '#e2e8f0'};
+      margin: 2.5em 0;
+    }
+    .preview-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5em 0;
+      font-size: 0.95em;
+      display: block;
+      overflow-x: auto;
+    }
+    @media (min-width: 640px) {
+      .preview-content table { display: table; }
+    }
+    .preview-content th,
+    .preview-content td {
+      border: 1px solid ${dark ? '#334155' : '#e2e8f0'};
+      padding: 0.75em;
+      text-align: left;
+    }
+    .preview-content th {
+      background-color: ${dark ? '#1e293b' : '#f8fafc'};
+      font-weight: 600;
+      color: ${dark ? '#f1f5f9' : '#334155'};
+    }
+    .preview-content tr:nth-child(even) {
+      background-color: ${dark ? '#0f172a' : '#fcfcfc'};
+    }
+  `;
+
   if (!libLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500">
-        <div className="animate-pulse flex items-center gap-2">
-          <Terminal className="w-5 h-5" />
-          Loading compiler...
-        </div>
-      </div>
-    );
+    return <Preloader isDarkMode={isDarkMode} />;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
-      <style>
-        {`
-          /* Custom styles for the MDX preview to make headings distinct */
-          .preview-content h1 {
-            font-size: 2.25em !important;
-            font-weight: 800 !important;
-            color: #1e293b !important;
-            border-bottom: 2px solid #e2e8f0;
-            margin-top: 1.5em;
-            margin-bottom: 0.8em;
-            padding-bottom: 0.3em;
-            line-height: 1.2;
-          }
-          .preview-content h2 {
-            font-size: 1.75em !important;
-            font-weight: 700 !important;
-            color: #334155 !important;
-            border-bottom: 1px solid #e2e8f0;
-            margin-top: 1.5em;
-            margin-bottom: 0.8em;
-            padding-bottom: 0.3em;
-            line-height: 1.3;
-          }
-          .preview-content h3 {
-            font-size: 1.5em !important;
-            font-weight: 600 !important;
-            color: #475569 !important;
-            margin-top: 1.4em;
-            margin-bottom: 0.6em;
-            line-height: 1.4;
-          }
-          .preview-content h4 {
-            font-size: 1.25em !important;
-            font-weight: 600 !important;
-            color: #475569 !important;
-            margin-top: 1.2em;
-            margin-bottom: 0.5em;
-          }
-          .preview-content p {
-            margin-bottom: 1.25em;
-            line-height: 1.7;
-          }
-          .preview-content ul {
-            list-style-type: disc;
-            padding-left: 1.6em;
-            margin-bottom: 1.25em;
-          }
-          .preview-content ol {
-            list-style-type: decimal;
-            padding-left: 1.6em;
-            margin-bottom: 1.25em;
-          }
-          .preview-content li {
-            margin-bottom: 0.5em;
-          }
-          .preview-content blockquote {
-            border-left: 4px solid #6366f1;
-            padding: 1em;
-            margin: 1.5em 0;
-            background-color: #f8fafc;
-            border-radius: 0 0.5rem 0.5rem 0;
-            color: #475569;
-            font-style: italic;
-          }
-          .preview-content pre {
-            background-color: #1e293b;
-            color: #e2e8f0;
-            padding: 1.25em;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            margin: 1.5em 0;
-          }
-          .preview-content code {
-            font-family: monospace;
-            font-size: 0.9em;
-          }
-          /* Inline code styling (not inside pre) */
-          .preview-content :not(pre) > code {
-            background-color: #f1f5f9;
-            color: #db2777;
-            padding: 0.2em 0.4em;
-            border-radius: 0.25em;
-            font-weight: 500;
-          }
-          .preview-content img {
-            border-radius: 0.5rem;
-            max-width: 100%;
-            height: auto;
-          }
-          .preview-content a {
-            color: #4f46e5;
-            text-decoration: underline;
-            text-underline-offset: 2px;
-          }
-          .preview-content a:hover {
-            color: #4338ca;
-          }
-          .preview-content hr {
-            border: 0;
-            border-top: 2px solid #e2e8f0;
-            margin: 2.5em 0;
-          }
-          /* Table Styles */
-          .preview-content table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1.5em 0;
-            font-size: 0.95em;
-          }
-          .preview-content th,
-          .preview-content td {
-            border: 1px solid #e2e8f0;
-            padding: 0.75em;
-            text-align: left;
-          }
-          .preview-content th {
-            background-color: #f8fafc;
-            font-weight: 600;
-            color: #334155;
-          }
-          .preview-content tr:nth-child(even) {
-            background-color: #fcfcfc;
-          }
-        `}
-      </style>
+    <div className={`h-[100dvh] flex flex-col font-sans transition-colors duration-200 ${isDarkMode ? 'bg-slate-950 text-slate-200' : 'bg-slate-50 text-slate-800'}`}>
+      <style>{getPreviewStyles(isDarkMode)}</style>
 
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-10">
-        <div className="flex items-center gap-2">
-          <div className="bg-indigo-600 p-2 rounded-lg">
-            <ArrowRightLeft className="w-5 h-5 text-white" />
-          </div>
-          <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-            MDX Converter
-          </h1>
+      <header className={`flex-none flex flex-col sm:flex-row items-center justify-between shadow-sm z-20 border-b transition-colors duration-200 gap-3 sm:gap-0 px-4 sm:px-6 py-3 sm:py-4 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+        
+        {/* Top Row: Logo & Actions (Mobile) */}
+        <div className="w-full sm:w-auto flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="bg-indigo-600 p-2 rounded-lg">
+                <ArrowRightLeft className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
+                MDX Converter
+              </h1>
+            </div>
+
+            {/* Mobile Only Actions: Help & Theme */}
+            <div className="flex items-center gap-2 sm:hidden">
+                 <button 
+                  onClick={() => setShowCheatSheet(true)}
+                  className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-slate-400 hover:text-indigo-400' : 'text-slate-500 hover:text-indigo-600'}`}
+                >
+                  <HelpCircle className="w-5 h-5" />
+                </button>
+                 <button 
+                  onClick={toggleTheme}
+                  className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'bg-slate-800 text-yellow-400' : 'bg-slate-100 text-slate-600'}`}
+                >
+                  {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </button>
+            </div>
         </div>
-        <div className="flex items-center gap-4">
+        
+        {/* Mobile View Toggle (Visible < MD) */}
+        <div className="w-full sm:hidden flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+           <button 
+             onClick={() => setMobileView('editor')}
+             className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+               mobileView === 'editor' 
+                 ? isDarkMode ? 'bg-slate-700 text-white shadow-sm' : 'bg-white text-indigo-600 shadow-sm'
+                 : isDarkMode ? 'text-slate-400' : 'text-slate-500'
+             }`}
+           >
+             <FileText className="w-4 h-4" /> Input
+           </button>
+           <button 
+             onClick={() => setMobileView('output')}
+             className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
+               mobileView === 'output' 
+                 ? isDarkMode ? 'bg-slate-700 text-white shadow-sm' : 'bg-white text-indigo-600 shadow-sm'
+                 : isDarkMode ? 'text-slate-400' : 'text-slate-500'
+             }`}
+           >
+             <Layout className="w-4 h-4" /> Output
+           </button>
+        </div>
+
+        {/* Desktop Actions (Hidden < SM) */}
+        <div className="hidden sm:flex items-center gap-4">
           <button 
             onClick={() => setShowCheatSheet(true)}
-            className="flex items-center gap-2 text-sm text-slate-500 hover:text-indigo-600 font-medium transition-colors"
+            className={`flex items-center gap-2 text-sm font-medium transition-colors ${isDarkMode ? 'text-slate-400 hover:text-indigo-400' : 'text-slate-500 hover:text-indigo-600'}`}
           >
             <HelpCircle className="w-4 h-4" />
-            <span className="hidden sm:inline">Cheat Sheet</span>
+            <span className="inline">Cheat Sheet</span>
+          </button>
+          
+          <div className={`w-px h-5 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-300'}`}></div>
+
+          <button 
+            onClick={toggleTheme}
+            className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'bg-slate-800 text-yellow-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+            title="Toggle Dark Mode"
+          >
+            {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col md:flex-row h-[calc(100vh-73px)] overflow-hidden">
+      <main className="flex-1 flex overflow-hidden relative">
         
-        {/* LEFT: Editor */}
-        <div className="w-full md:w-1/2 flex flex-col border-r border-slate-200 bg-white">
-          <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
+        {/* LEFT: Editor Pane */}
+        <div className={`
+          flex-col w-full md:w-1/2 border-r transition-colors duration-200 h-full
+          ${mobileView === 'editor' ? 'flex' : 'hidden md:flex'}
+          ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}
+        `}>
+          <div className={`flex items-center justify-between px-4 py-3 border-b transition-colors duration-200 flex-none ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-slate-700 font-medium">
+              <div className={`flex items-center gap-2 font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                 <Terminal className="w-4 h-4" />
-                <span>MDX Input</span>
+                <span className="hidden sm:inline">MDX Input</span>
+                <span className="sm:hidden">Input</span>
               </div>
               
-              {/* Auto-Save Indicator */}
-              <div className={`flex items-center gap-1.5 text-xs transition-colors duration-300 ${isSaved ? 'text-green-600' : 'text-amber-500'}`}>
+              <div className={`flex items-center gap-1.5 text-xs transition-colors duration-300 ${isSaved ? 'text-green-500' : 'text-amber-500'}`}>
                 {isSaved ? (
                   <>
                     <Cloud className="w-3 h-3" />
-                    <span>Auto-saved</span>
+                    <span className="hidden sm:inline">Auto-saved</span>
                   </>
                 ) : (
                   <>
                     <Loader2 className="w-3 h-3 animate-spin" />
-                    <span>Saving...</span>
+                    <span className="hidden sm:inline">Saving...</span>
                   </>
                 )}
               </div>
@@ -490,56 +571,71 @@ const App = () => {
             <div className="flex items-center gap-3">
                <button 
                 onClick={() => downloadFile(input, 'document.md', 'text/markdown')}
-                className="text-xs flex items-center gap-1 text-slate-500 hover:text-indigo-600 transition-colors"
+                className={`text-xs flex items-center gap-1 transition-colors ${isDarkMode ? 'text-slate-400 hover:text-indigo-400' : 'text-slate-500 hover:text-indigo-600'}`}
                 title="Download Source MD"
               >
-                <Save className="w-3 h-3" /> Save MD
+                <Save className="w-3 h-3" /> <span className="hidden sm:inline">Save MD</span>
               </button>
-              <div className="w-px h-3 bg-slate-300"></div>
+              <div className={`w-px h-3 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-300'}`}></div>
               <button 
                 onClick={handleClear}
-                className="text-xs flex items-center gap-1 text-slate-500 hover:text-red-600 transition-colors"
+                className={`text-xs flex items-center gap-1 transition-colors ${isDarkMode ? 'text-slate-400 hover:text-red-400' : 'text-slate-500 hover:text-red-600'}`}
               >
-                <Eraser className="w-3 h-3" /> Clear
+                <Eraser className="w-3 h-3" /> <span className="hidden sm:inline">Clear</span>
               </button>
             </div>
           </div>
           <textarea
-            className="flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none focus:ring-inset focus:ring-2 focus:ring-indigo-500/50 bg-white text-slate-800 leading-relaxed"
+            className={`flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none focus:ring-inset focus:ring-2 focus:ring-indigo-500/50 leading-relaxed transition-colors duration-200 ${isDarkMode ? 'bg-slate-950 text-slate-300 placeholder-slate-600' : 'bg-white text-slate-800'}`}
             value={input}
             onChange={handleInputChange}
             placeholder="Type your MDX here..."
             spellCheck="false"
           />
+          {/* Status Bar */}
+          <div className={`flex-none px-4 py-2 border-t text-xs flex justify-end gap-4 transition-colors duration-200 ${isDarkMode ? 'bg-slate-900 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+            <span className="flex items-center gap-1.5">
+              <Type className="w-3 h-3" />
+              <span className="hidden sm:inline">Words:</span> <strong className={isDarkMode ? 'text-slate-200' : 'text-slate-700'}>{stats.words}</strong>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Terminal className="w-3 h-3" />
+              <span className="hidden sm:inline">Chars:</span> <strong className={isDarkMode ? 'text-slate-200' : 'text-slate-700'}>{stats.chars}</strong>
+            </span>
+          </div>
         </div>
 
-        {/* RIGHT: Output */}
-        <div className="w-full md:w-1/2 flex flex-col bg-slate-50">
+        {/* RIGHT: Output Pane */}
+        <div className={`
+          flex-col w-full md:w-1/2 transition-colors duration-200 h-full
+          ${mobileView === 'output' ? 'flex' : 'hidden md:flex'}
+          ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'}
+        `}>
           
           {/* Output Controls */}
-          <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-slate-200">
+          <div className={`flex-none flex items-center justify-between px-4 py-2 border-b transition-colors duration-200 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
             
             {/* Tabs */}
-            <div className="flex bg-slate-100 p-1 rounded-lg">
+            <div className={`flex p-1 rounded-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
               <button
                 onClick={() => setActiveTab('preview')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                   activeTab === 'preview' 
-                    ? 'bg-white text-indigo-600 shadow-sm' 
-                    : 'text-slate-500 hover:text-slate-700'
+                    ? isDarkMode ? 'bg-slate-700 text-indigo-400 shadow-sm' : 'bg-white text-indigo-600 shadow-sm'
+                    : isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
-                <Eye className="w-4 h-4" /> Preview
+                <Eye className="w-4 h-4" /> <span className="hidden sm:inline">Preview</span>
               </button>
               <button
                 onClick={() => setActiveTab('html')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                   activeTab === 'html' 
-                    ? 'bg-white text-indigo-600 shadow-sm' 
-                    : 'text-slate-500 hover:text-slate-700'
+                    ? isDarkMode ? 'bg-slate-700 text-indigo-400 shadow-sm' : 'bg-white text-indigo-600 shadow-sm'
+                    : isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
-                <Code className="w-4 h-4" /> HTML Code
+                <Code className="w-4 h-4" /> <span className="hidden sm:inline">Code</span>
               </button>
             </div>
 
@@ -547,7 +643,7 @@ const App = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => downloadFile(htmlOutput, 'document.html', 'text/html')}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border bg-white border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600"
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:border-indigo-500 hover:text-indigo-400' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600'}`}
                 title="Download HTML File"
               >
                 <Download className="w-4 h-4" /> <span className="hidden sm:inline">Export HTML</span>
@@ -556,12 +652,12 @@ const App = () => {
                 onClick={handleCopy}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
                   copied
-                    ? 'bg-green-50 border-green-200 text-green-600'
-                    : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600'
+                    ? isDarkMode ? 'bg-green-900/30 border-green-800 text-green-400' : 'bg-green-50 border-green-200 text-green-600'
+                    : isDarkMode ? 'bg-slate-800 border-slate-700 text-slate-300 hover:border-indigo-500 hover:text-indigo-400' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600'
                 }`}
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copied ? 'Copied' : 'Copy'}
+                <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
               </button>
             </div>
           </div>
@@ -569,7 +665,7 @@ const App = () => {
           {/* Output Content */}
           <div className="flex-1 overflow-auto relative">
             {error && (
-              <div className="absolute top-4 left-4 right-4 bg-red-50 text-red-600 p-4 rounded-lg border border-red-200 text-sm">
+              <div className={`absolute top-4 left-4 right-4 p-4 rounded-lg border text-sm z-20 ${isDarkMode ? 'bg-red-900/20 text-red-400 border-red-800' : 'bg-red-50 text-red-600 border-red-200'}`}>
                 <strong>Error:</strong> {error}
               </div>
             )}
@@ -577,7 +673,7 @@ const App = () => {
             {activeTab === 'preview' ? (
               // Live Preview Mode
               <div 
-                className="p-8 max-w-none preview-content"
+                className="p-4 sm:p-8 max-w-none preview-content"
                 dangerouslySetInnerHTML={{ __html: htmlOutput }}
               />
             ) : (
@@ -586,7 +682,7 @@ const App = () => {
                 <textarea 
                   readOnly
                   value={htmlOutput}
-                  className="w-full h-full p-4 font-mono text-sm bg-slate-900 text-blue-100 resize-none focus:outline-none"
+                  className={`w-full h-full p-4 font-mono text-sm resize-none focus:outline-none ${isDarkMode ? 'bg-slate-950 text-indigo-200' : 'bg-slate-900 text-blue-100'}`}
                 />
               </div>
             )}
@@ -595,7 +691,7 @@ const App = () => {
       </main>
 
       {/* Cheat Sheet Modal */}
-      {showCheatSheet && <CheatSheet onClose={() => setShowCheatSheet(false)} />}
+      {showCheatSheet && <CheatSheet onClose={() => setShowCheatSheet(false)} isDarkMode={isDarkMode} />}
     </div>
   );
 };
