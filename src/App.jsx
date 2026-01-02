@@ -17,7 +17,8 @@ import {
   Sun,
   Type,
   Layout,
-  FileText
+  FileText,
+  AlertTriangle
 } from 'lucide-react';
 
 const STORAGE_KEY = 'mdx_converter_content';
@@ -175,6 +176,36 @@ const CheatSheet = ({ onClose, isDarkMode }) => (
   </div>
 );
 
+const ClearConfirmation = ({ onConfirm, onCancel, isDarkMode }) => (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className={`rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200 ${isDarkMode ? 'bg-slate-900 text-slate-200' : 'bg-white text-slate-800'}`}>
+      <div className="p-6 flex flex-col items-center text-center">
+        <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4">
+          <AlertTriangle className="w-6 h-6" />
+        </div>
+        <h3 className="text-lg font-bold mb-2">Clear Editor?</h3>
+        <p className={`text-sm mb-6 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+          This will remove all text and clear your auto-saved data. This action cannot be undone.
+        </p>
+        <div className="flex gap-3 w-full">
+          <button 
+            onClick={onCancel}
+            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isDarkMode ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={onConfirm}
+            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+          >
+            Yes, Clear
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 // --- Main App ---
 
 const App = () => {
@@ -203,6 +234,7 @@ const App = () => {
   const [error, setError] = useState(null);
   const [libLoaded, setLibLoaded] = useState(false);
   const [showCheatSheet, setShowCheatSheet] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isSaved, setIsSaved] = useState(true);
 
   // Stats calculation
@@ -252,11 +284,16 @@ const App = () => {
     setIsDarkMode(!isDarkMode);
   };
 
-  const handleClear = () => {
-    if (confirm('Are you sure you want to clear the editor? This will also clear your auto-saved data.')) {
-      setInput('');
-      setIsSaved(false);
-    }
+  // Trigger modal instead of native confirm
+  const handleClearClick = () => {
+    setShowClearConfirm(true);
+  };
+
+  // Actual clear logic
+  const performClear = () => {
+    setInput('');
+    setIsSaved(false);
+    setShowClearConfirm(false);
   };
 
   const formatHTML = (html) => {
@@ -482,10 +519,10 @@ const App = () => {
       <style>{getGlobalStyles(isDarkMode)}</style>
 
       {/* Header */}
-      <header className={`flex-none flex flex-col sm:flex-row items-center justify-between shadow-sm z-20 border-b transition-colors duration-200 gap-3 sm:gap-0 px-4 sm:px-6 py-3 sm:py-4 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+      <header className={`flex-none flex flex-col md:flex-row items-center justify-between shadow-sm z-20 border-b transition-colors duration-200 gap-3 md:gap-0 px-4 sm:px-6 py-3 sm:py-4 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
         
         {/* Top Row: Logo & Actions (Mobile) */}
-        <div className="w-full sm:w-auto flex items-center justify-between">
+        <div className="w-full md:w-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="bg-indigo-600 p-2 rounded-lg">
                 <ArrowRightLeft className="w-5 h-5 text-white" />
@@ -496,7 +533,7 @@ const App = () => {
             </div>
 
             {/* Mobile Only Actions: Help & Theme */}
-            <div className="flex items-center gap-2 sm:hidden">
+            <div className="flex items-center gap-2 md:hidden">
                  <button 
                   onClick={() => setShowCheatSheet(true)}
                   className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'text-slate-400 hover:text-indigo-400' : 'text-slate-500 hover:text-indigo-600'}`}
@@ -513,7 +550,7 @@ const App = () => {
         </div>
         
         {/* Mobile View Toggle (Visible < MD) */}
-        <div className="w-full sm:hidden flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+        <div className="w-full md:hidden flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
            <button 
              onClick={() => setMobileView('editor')}
              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-all ${
@@ -536,8 +573,8 @@ const App = () => {
            </button>
         </div>
 
-        {/* Desktop Actions (Hidden < SM) */}
-        <div className="hidden sm:flex items-center gap-4">
+        {/* Desktop Actions (Hidden < MD) */}
+        <div className="hidden md:flex items-center gap-4">
           <button 
             onClick={() => setShowCheatSheet(true)}
             className={`flex items-center gap-2 text-sm font-medium transition-colors ${isDarkMode ? 'text-slate-400 hover:text-indigo-400' : 'text-slate-500 hover:text-indigo-600'}`}
@@ -600,7 +637,7 @@ const App = () => {
               </button>
               <div className={`w-px h-3 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-300'}`}></div>
               <button 
-                onClick={handleClear}
+                onClick={handleClearClick}
                 className={`text-xs flex items-center gap-1 transition-colors ${isDarkMode ? 'text-slate-400 hover:text-red-400' : 'text-slate-500 hover:text-red-600'}`}
               >
                 <Eraser className="w-3 h-3" /> <span className="hidden sm:inline">Clear</span>
@@ -712,8 +749,9 @@ const App = () => {
         </div>
       </main>
 
-      {/* Cheat Sheet Modal */}
+      {/* Modals */}
       {showCheatSheet && <CheatSheet onClose={() => setShowCheatSheet(false)} isDarkMode={isDarkMode} />}
+      {showClearConfirm && <ClearConfirmation onConfirm={performClear} onCancel={() => setShowClearConfirm(false)} isDarkMode={isDarkMode} />}
     </div>
   );
 };
